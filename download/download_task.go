@@ -22,13 +22,35 @@ type MainDownloadTask struct {
 
 func (t *MainDownloadTask) reportSuccess(taskIndex int) {
 	t.mutex.Lock()
-	resultArr := make([]byte, len(t.TaskStatus.Nodes))
+	totalNodes := t.TotalTaskCount()
+	resultArrLength := totalNodes
+	if totalNodes%10 == 0 {
+		resultArrLength += totalNodes/10 - 1
+	} else {
+		resultArrLength += totalNodes / 10
+	}
+	resultArr := make([]byte, resultArrLength)
+	resultArrIndex := 0
 	for nodeIndex, nodeInfo := range t.TaskStatus.Nodes {
 		if nodeIndex == taskIndex {
-			resultArr[nodeIndex] = STATUS_SUCCESS
+			resultArr[resultArrIndex] = STATUS_SUCCESS
 		} else {
-			resultArr[nodeIndex] = nodeInfo.Status
+			resultArr[resultArrIndex] = nodeInfo.Status
 		}
+		if nodeIndex%100 == 99 {
+			resultArrIndex++
+			if resultArrIndex< resultArrLength{
+				resultArr[resultArrIndex] = 10 //\n
+			}
+
+		} else if nodeIndex%10 == 9 {
+			resultArrIndex++
+			if resultArrIndex< resultArrLength{
+				resultArr[resultArrIndex] = 32 //space
+			}
+
+		}
+		resultArrIndex++
 	}
 	dataFile := filepath.Join(t.Config.SaveDir, "tmp", t.Config.FileName, "000task.data")
 	_ = ioutil.WriteFile(dataFile, resultArr, 0644)

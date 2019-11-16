@@ -47,14 +47,21 @@ func main() {
 		if err != nil {
 			log.Fatalln("read file (" + dataFile + ") error: " + err.Error())
 		}
-		for nodeIndex, nodeStatus := range taskDataBits {
-			if nodeIndex >= len(taskStatus.Nodes) {
+		taskNodeIndex := 0
+		for _, nodeStatus := range taskDataBits {
+			if nodeStatus != download.STATUS_SUCCESS &&
+				nodeStatus != download.STATUS_NOT_RUNNING &&
+				nodeStatus != download.STATUS_RUNNING {
 				continue
 			}
+			if taskNodeIndex >= len(taskStatus.Nodes) {
+				break
+			}
 			if nodeStatus == download.STATUS_SUCCESS {
-				taskStatus.Nodes[nodeIndex].Status = nodeStatus
+				taskStatus.Nodes[taskNodeIndex].Status = nodeStatus
 				downloadSuccessCount++
 			}
+			taskNodeIndex++
 		}
 	}
 	uiprogress.Start()
@@ -63,9 +70,9 @@ func main() {
 		Config:           taskConfig,
 		NewTaskIndex:     make(chan int),
 		DownloadComplete: make(chan bool),
-		Bar:              uiprogress.AddBar(len(taskStatus.Nodes) - downloadSuccessCount),
+		Bar:              uiprogress.AddBar(len(taskStatus.Nodes)),
 	}
-	//_ = mainDownTask.Bar.Set(downloadSuccessCount)
+	_ = mainDownTask.Bar.Set(downloadSuccessCount)
 	mainDownTask.Bar.AppendCompleted()
 	mainDownTask.Bar.PrependElapsed()
 	mainDownTask.Bar.PrependFunc(func(b *uiprogress.Bar) string {
