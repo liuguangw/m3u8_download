@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"sync"
+	"time"
 )
 
 type MainDownloadTask struct {
@@ -20,14 +21,18 @@ type MainDownloadTask struct {
 
 func (t *MainDownloadTask) reportSuccess(taskIndex int) {
 	t.mutex.Lock()
-	t.TaskStatus.Nodes[taskIndex].Status = STATUS_SUCCESS
 	resultArr := make([]byte, len(t.TaskStatus.Nodes))
 	for nodeIndex, nodeInfo := range t.TaskStatus.Nodes {
-		resultArr[nodeIndex] = nodeInfo.Status
+		if nodeIndex == taskIndex {
+			resultArr[nodeIndex] = STATUS_SUCCESS
+		} else {
+			resultArr[nodeIndex] = nodeInfo.Status
+		}
 	}
 	dataFile := filepath.Join(t.Config.SaveDir, "tmp", t.Config.FileName, "000task.data")
 	_ = ioutil.WriteFile(dataFile, resultArr, 0644)
 	_ = t.Bar.Incr()
+	t.TaskStatus.Nodes[taskIndex].Status = STATUS_SUCCESS //
 	t.mutex.Unlock()
 }
 
@@ -41,8 +46,8 @@ func (t *MainDownloadTask) RunDownload() {
 		if !ok {
 			break
 		}
-		//fmt.Println("[index]downloading: ", taskIndex)
 		taskInfo := t.TaskStatus.Nodes[taskIndex]
+		//fmt.Println("[index]downloading: ", taskIndex,"  ",taskInfo.DownloadUrl)
 		tsSavePath := filepath.Join(t.Config.SaveDir, "tmp", t.Config.FileName, strconv.Itoa(taskIndex)+".ts")
 		//download
 		resp, err := FetchUrl(t.Config, taskInfo.DownloadUrl)
@@ -93,6 +98,7 @@ func (t *MainDownloadTask) RunBackend() {
 			close(t.NewTaskIndex)
 			break
 		}
+		time.Sleep(time.Duration(1500) * time.Millisecond)
 	}
 	t.DownloadComplete <- true
 }

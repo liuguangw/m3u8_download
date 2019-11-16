@@ -59,7 +59,7 @@ func readKeyFields(config *TaskConfig, lineContent string) (*EncryptInfo, error)
 func WriteTsList(filePath string, nodeCount int) error {
 	fileContent := ""
 	for i := 0; i < nodeCount; i++ {
-		fileContent += " file \"" + strconv.Itoa(i) + ".ts\""
+		fileContent += " file '" + strconv.Itoa(i) + ".ts'"
 		if i < nodeCount-1 {
 			fileContent += "\n"
 		}
