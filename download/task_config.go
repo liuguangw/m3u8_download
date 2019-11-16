@@ -2,6 +2,7 @@ package download
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -52,8 +53,8 @@ func ReadTaskConfig(coonfigPath string) (*TaskConfig, error) {
 func FetchUrl(config *TaskConfig, url string) (*http.Response, error) {
 	client := &http.Client{
 		Transport: &http.Transport{
-			MaxIdleConns:       config.MaxTask,
-			IdleConnTimeout:    30 * time.Second,
+			MaxIdleConns:    config.MaxTask,
+			IdleConnTimeout: 30 * time.Second,
 		},
 		//Timeout: time.Duration(config.TimeOut) * time.Second,
 	}
@@ -65,6 +66,12 @@ func FetchUrl(config *TaskConfig, url string) (*http.Response, error) {
 		req.Header.Add(key, value)
 	}
 	//fmt.Println(req,client)
-	return client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("Http " + resp.Status + " Error")
+	}
+	return resp, nil
 }
-

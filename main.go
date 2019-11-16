@@ -48,6 +48,9 @@ func main() {
 			log.Fatalln("read file (" + dataFile + ") error: " + err.Error())
 		}
 		for nodeIndex, nodeStatus := range taskDataBits {
+			if nodeIndex >= len(taskStatus.Nodes) {
+				continue
+			}
 			if nodeStatus == download.STATUS_SUCCESS {
 				taskStatus.Nodes[nodeIndex].Status = nodeStatus
 				downloadSuccessCount++
@@ -73,4 +76,5 @@ func main() {
 		go mainDownTask.RunDownload()
 	}
 	<-mainDownTask.DownloadComplete
+	_, _ = fmt.Scan()
 }
