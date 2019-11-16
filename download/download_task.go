@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -63,13 +64,16 @@ func (t *MainDownloadTask) RunDownload() {
 			continue
 		}
 		resp.Body.Close()
-		if t.TaskStatus.FileEncryptInfo != nil {
-			contentByteArr, err = DecryptData(contentByteArr,
-				t.TaskStatus.FileEncryptInfo.Key, t.TaskStatus.FileEncryptInfo.Iv)
-			if err != nil {
-				taskInfo.Status = STATUS_NOT_RUNNING
-				fmt.Println("decode ts error: " + err.Error())
-				continue
+		encryptInfo := t.TaskStatus.FileEncryptInfo
+		if encryptInfo != nil {
+			if strings.HasPrefix(encryptInfo.Method, "AES") {
+				//AES解密
+				contentByteArr, err = AesDecryptData(contentByteArr, encryptInfo.Key, encryptInfo.Iv)
+				if err != nil {
+					taskInfo.Status = STATUS_NOT_RUNNING
+					fmt.Println("decode ts error: " + err.Error())
+					continue
+				}
 			}
 		}
 		err = ioutil.WriteFile(tsSavePath, contentByteArr, 0644)

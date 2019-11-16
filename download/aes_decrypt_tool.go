@@ -6,7 +6,7 @@ import (
 	"errors"
 )
 
-func DecryptData(binData ,key,iv []byte)([]byte,error)  {
+func AesDecryptData(binData ,key,iv []byte)([]byte,error)  {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil,errors.New("key error: "+ err.Error())

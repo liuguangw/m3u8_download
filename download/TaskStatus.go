@@ -1,6 +1,7 @@
 package download
 
 import (
+	"encoding/base64"
 	"errors"
 	"io/ioutil"
 	"strings"
@@ -32,6 +33,13 @@ func GetTaskStatus(config *TaskConfig) (*TaskStatus, error) {
 	}
 	resp.Body.Close()
 	m3u8Content := string(contentByteArr)
+	if config.EncodeType == "base64" {
+		tmpData, err := base64.StdEncoding.DecodeString(m3u8Content)
+		if err != nil {
+			return nil, errors.New(config.EncodeType + " decode error: " + err.Error())
+		}
+		m3u8Content = string(tmpData)
+	}
 	//fmt.Println("[" + m3u8Content + "]")
 	lines := strings.Split(m3u8Content, "\n")
 	var encryptInfo *EncryptInfo
