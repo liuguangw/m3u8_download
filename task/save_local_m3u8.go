@@ -5,7 +5,6 @@ import (
 	"github.com/liuguangw/m3u8_download/io"
 	"path/filepath"
 	"strconv"
-	"strings"
 )
 
 func SaveLocalM3u8(m3u8Info *common.M3u8Data, downloadTask *DownloadTask) error {
@@ -17,12 +16,10 @@ func SaveLocalM3u8(m3u8Info *common.M3u8Data, downloadTask *DownloadTask) error 
 		EncryptIv:     m3u8Info.EncryptIv,
 	}
 	if m3u8Info.EncryptMethod != "" {
-		encryptKeyPath := downloadTask.EncryptKeyPath
-		localM3u8Info.EncryptKeyUri = strings.Replace(encryptKeyPath, "\\", "/", -1)
+		localM3u8Info.EncryptKeyUri = filepath.Base(downloadTask.EncryptKeyPath)
 	}
 	for i := 0; i < len(m3u8Info.TsUrls); i++ {
-		tsFilePath := filepath.Join(downloadTask.CacheDir, strconv.Itoa(i)+".ts")
-		localM3u8Info.TsUrls[i] = strings.Replace(tsFilePath, "\\", "/", -1)
+		localM3u8Info.TsUrls[i] = strconv.Itoa(i) + ".ts"
 	}
 	return io.WriteM3u8Content(downloadTask.LocalM3u8Path, localM3u8Info)
 }
