@@ -1,6 +1,7 @@
 package task
 
 import (
+	"encoding/base64"
 	"errors"
 	"github.com/liuguangw/m3u8_download/common"
 	"github.com/liuguangw/m3u8_download/io"
@@ -36,6 +37,12 @@ func loadTaskM3u8Info(downloadTask *DownloadTask) (m3u8CacheExists bool,
 		m3u8ContentBits, err = io.FetchUrl(taskConfig.M3u8Url, taskConfig)
 		if err != nil {
 			return m3u8CacheExists, m3u8Info, taskStatusArr, errors.New("Fetch m3u8 url Error: " + err.Error())
+		}
+		if taskConfig.EncodeType == "base64" {
+			m3u8ContentBits, err = base64.StdEncoding.DecodeString(string(m3u8ContentBits))
+			if err != nil {
+				return m3u8CacheExists, m3u8Info, taskStatusArr, errors.New("Base64 decode m3u8 content Error: " + err.Error())
+			}
 		}
 	}
 	m3u8Info, err = io.ReadM3u8Content(string(m3u8ContentBits))
