@@ -136,5 +136,6 @@ func main() {
 			return
 		}
 	}
-	tools.ShowSuccessMessage("all complete")
+	fileSavePath := filepath.Join(downloadTask.TaskConfig.SaveDir, downloadTask.TaskConfig.SaveFileName)
+	tools.ShowSuccessMessage("all complete -> " + fileSavePath)
 }
