@@ -12,6 +12,7 @@ import (
 )
 
 func main() {
+	tools.ShowCommonMessage("Powered by liuguang@github https://github.com/liuguangw")
 	configPath := ""
 	if len(os.Args) < 2 {
 		noteStr := "Usage: m3u8_download [configFile]"
@@ -38,7 +39,9 @@ func main() {
 		if err != nil {
 			tools.ShowErrorMessage("cache task Data Error: " + err.Error())
 		}
-		tools.ShowSuccessMessage(strconv.Itoa(successCount) + "/" + strconv.Itoa(totalCount) + " files downloaded")
+		tools.ShowSuccessMessage(strconv.Itoa(successCount) +
+			"/" + strconv.Itoa(totalCount) + " files downloaded(" +
+			tools.CalcPercent(successCount, totalCount) + ")")
 		for successCount < totalCount {
 			successCount += <-downloadTask.DownloadSuccessCount
 			//保存任务数据文件
@@ -46,7 +49,9 @@ func main() {
 			if err != nil {
 				tools.ShowErrorMessage("cache task Data Error: " + err.Error())
 			}
-			tools.ShowSuccessMessage(strconv.Itoa(successCount) + "/" + strconv.Itoa(totalCount) + " files downloaded")
+			tools.ShowSuccessMessage(strconv.Itoa(successCount) +
+				"/" + strconv.Itoa(totalCount) + " files downloaded(" +
+				tools.CalcPercent(successCount, totalCount) + ")")
 		}
 	}
 	tools.ShowSuccessMessage("all downloaded")
