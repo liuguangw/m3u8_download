@@ -1,87 +1,49 @@
 package main
 
 import (
-	"fmt"
-	"github.com/gosuri/uiprogress"
-	"github.com/liuguangw/m3u8_download/download"
-	"io/ioutil"
-	"log"
+	"github.com/liuguangw/m3u8_download/task"
+	"github.com/liuguangw/m3u8_download/tools"
 	"os"
-	"path/filepath"
 	"strconv"
 )
 
 func main() {
 	configPath := "F:\\movie\\config.json"
 	if len(os.Args) < 2 {
-		fmt.Println("Use: " + filepath.Base(os.Args[0]) + " <configPath>")
+		noteStr := "Usage: m3u8_download [configFile]"
+		tools.ShowErrorMessage(noteStr)
 		//return
 	} else {
 		configPath = os.Args[1]
 	}
-	taskConfig, err := download.ReadTaskConfig(configPath)
+	downloadTask, err := task.NewDownloadTask(configPath)
 	if err != nil {
-		log.Fatalln("read config error: ", err)
+		tools.ShowError(err)
+		return
 	}
-	taskStatus, err := download.GetTaskStatus(taskConfig)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	saveDir := filepath.Join(taskConfig.SaveDir, "tmp", taskConfig.FileName)
-	_, err = os.Stat(saveDir)
-	if os.IsNotExist(err) {
-		err = os.Mkdir(saveDir, 0644)
+	//fmt.Println(downloadTask)
+	successCount := downloadTask.CacahedSuccessCount
+	totalCount := len(downloadTask.TaskNodes)
+	if successCount < totalCount {
+		go downloadTask.RunBackend()
+		for i := 0; i < downloadTask.TaskConfig.MaxTask; i++ {
+			go downloadTask.RunDownload()
+		}
+		//保存任务数据文件
+		err = task.CacheTaskData(downloadTask)
 		if err != nil {
-			log.Fatalln("make dir (" + saveDir + ") error: " + err.Error())
+			tools.ShowErrorMessage("cache task Data Error: " + err.Error())
+		}
+		tools.ShowSuccessMessage(strconv.Itoa(successCount) + "/" + strconv.Itoa(totalCount) + " files downloaded")
+		for successCount < totalCount {
+			successCount += <-downloadTask.DownloadSuccessCount
+			//保存任务数据文件
+			err = task.CacheTaskData(downloadTask)
+			if err != nil {
+				tools.ShowErrorMessage("cache task Data Error: " + err.Error())
+			}
+			tools.ShowSuccessMessage(strconv.Itoa(successCount) + "/" + strconv.Itoa(totalCount) + " files downloaded")
 		}
 	}
-	err = download.WriteTsList(filepath.Join(saveDir, "000list.txt"), len(taskStatus.Nodes))
-	if err != nil {
-		log.Fatalln("write list.txt error: " + err.Error())
-	}
-	downloadSuccessCount := 0
-	dataFile := filepath.Join(saveDir, "000task.data")
-	_, err = os.Stat(dataFile)
-	if !os.IsNotExist(err) {
-		taskDataBits, err := ioutil.ReadFile(dataFile)
-		if err != nil {
-			log.Fatalln("read file (" + dataFile + ") error: " + err.Error())
-		}
-		taskNodeIndex := 0
-		for _, nodeStatus := range taskDataBits {
-			if nodeStatus != download.STATUS_SUCCESS &&
-				nodeStatus != download.STATUS_NOT_RUNNING &&
-				nodeStatus != download.STATUS_RUNNING {
-				continue
-			}
-			if taskNodeIndex >= len(taskStatus.Nodes) {
-				break
-			}
-			if nodeStatus == download.STATUS_SUCCESS {
-				taskStatus.Nodes[taskNodeIndex].Status = nodeStatus
-				downloadSuccessCount++
-			}
-			taskNodeIndex++
-		}
-	}
-	uiprogress.Start()
-	mainDownTask := &download.MainDownloadTask{
-		TaskStatus:       taskStatus,
-		Config:           taskConfig,
-		NewTaskIndex:     make(chan int),
-		DownloadComplete: make(chan bool),
-		Bar:              uiprogress.AddBar(len(taskStatus.Nodes)),
-	}
-	_ = mainDownTask.Bar.Set(downloadSuccessCount)
-	mainDownTask.Bar.AppendCompleted()
-	mainDownTask.Bar.PrependElapsed()
-	mainDownTask.Bar.PrependFunc(func(b *uiprogress.Bar) string {
-		return "download: " + strconv.Itoa(b.Current()) + "/" + strconv.Itoa(b.Total)
-	})
-	go mainDownTask.RunBackend()
-	for i := 0; i < taskConfig.MaxTask; i++ {
-		go mainDownTask.RunDownload()
-	}
-	<-mainDownTask.DownloadComplete
-	_, _ = fmt.Scan()
+	tools.ShowSuccessMessage("all downloaded")
 }
