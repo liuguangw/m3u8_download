@@ -7,14 +7,16 @@ import (
 )
 
 func ReadTaskConfig(coonfigPath string) (*common.TaskConfig, error) {
+	//配置默认值
 	config := &common.TaskConfig{
-		M3u8Url:      "",
-		ExtraHeaders: map[string]string{},
-		EncodeType:   "",
-		TimeOut:      10,
-		MaxTask:      8,
-		SaveFileName: "output.mp4",
-		SaveDir:      "F:\\movie",
+		M3u8Url:                "",
+		ExtraHeaders:           map[string]string{},
+		EncodeType:             "",
+		TimeOut:                10,
+		MaxTask:                8,
+		SaveFileName:           "output.mp4",
+		SaveDir:                "F:\\movie",
+		CleanCacheAfterSuccess: false,
 	}
 	if coonfigPath != "" {
 		// 读取文件

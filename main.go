@@ -128,11 +128,13 @@ func main() {
 		return
 	}
 	//删除缓存文件夹
-	tools.ShowCommonMessage("clean cache....")
-	err = os.RemoveAll(downloadTask.CacheDir)
-	if err != nil {
-		tools.ShowErrorMessage("Delete Cache Error: " + err.Error())
-		return
+	if downloadTask.TaskConfig.CleanCacheAfterSuccess {
+		tools.ShowCommonMessage("clean cache....")
+		err = os.RemoveAll(downloadTask.CacheDir)
+		if err != nil {
+			tools.ShowErrorMessage("Delete Cache Error: " + err.Error())
+			return
+		}
 	}
 	tools.ShowSuccessMessage("all complete")
 }

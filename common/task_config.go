@@ -22,4 +22,7 @@ type TaskConfig struct {
 
 	//保存文件夹路径
 	SaveDir string `json:"save_dir"`
+
+	//完成任务后是否清理缓存
+	CleanCacheAfterSuccess bool `json:"clean_cache_after_success"`
 }
