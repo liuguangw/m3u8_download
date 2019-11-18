@@ -2,7 +2,7 @@ package tools
 
 import "fmt"
 
-func CalcPercent(value, max int) string {
+func calcPercent(value, max int) string {
 	if value == 0 {
 		return "0%"
 	} else if value == max {

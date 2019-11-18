@@ -8,7 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
+	"time"
 )
 
 func main() {
@@ -39,9 +39,8 @@ func main() {
 		if err != nil {
 			tools.ShowErrorMessage("cache task Data Error: " + err.Error())
 		}
-		tools.ShowSuccessMessage(strconv.Itoa(successCount) +
-			"/" + strconv.Itoa(totalCount) + " files downloaded(" +
-			tools.CalcPercent(successCount, totalCount) + ")")
+		taskStartTime := time.Now()
+		tools.ShowSuccessMessage(tools.FormatDownloadProgress(successCount, totalCount, &taskStartTime))
 		for successCount < totalCount {
 			successCount += <-downloadTask.DownloadSuccessCount
 			//保存任务数据文件
@@ -49,9 +48,7 @@ func main() {
 			if err != nil {
 				tools.ShowErrorMessage("cache task Data Error: " + err.Error())
 			}
-			tools.ShowSuccessMessage(strconv.Itoa(successCount) +
-				"/" + strconv.Itoa(totalCount) + " files downloaded(" +
-				tools.CalcPercent(successCount, totalCount) + ")")
+			tools.ShowSuccessMessage(tools.FormatDownloadProgress(successCount, totalCount, &taskStartTime))
 		}
 	}
 	tools.ShowSuccessMessage("all downloaded")
