@@ -25,4 +25,7 @@ type TaskConfig struct {
 
 	//完成任务后是否清理缓存
 	CleanCacheAfterSuccess bool `json:"clean_cache_after_success"`
+
+	//网络代理 如http://ip:port https://ip:port socks5://ip:port
+	Proxy string `json:"proxy"`
 }

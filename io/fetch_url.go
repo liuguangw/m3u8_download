@@ -5,18 +5,29 @@ import (
 	"github.com/liuguangw/m3u8_download/common"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"time"
 )
 
-func doFetchUrl(url string, taskConfig *common.TaskConfig) (*http.Response, error) {
+func doFetchUrl(targetUrl string, taskConfig *common.TaskConfig) (*http.Response, error) {
+	// 配置proxy
+	proxyFn := http.ProxyFromEnvironment
+	if taskConfig.Proxy != "" {
+		proxyUrl, err := url.Parse(taskConfig.Proxy)
+		if err != nil {
+			return nil, errors.New("Parse proxy Url failed: " + err.Error())
+		}
+		proxyFn = http.ProxyURL(proxyUrl)
+	}
 	client := &http.Client{
 		Transport: &http.Transport{
+			Proxy:                 proxyFn,
 			MaxIdleConns:          taskConfig.MaxTask,
 			IdleConnTimeout:       30 * time.Second,
 			ResponseHeaderTimeout: time.Duration(taskConfig.TimeOut) * time.Second,
 		},
 	}
-	request, err := http.NewRequest("GET", url, nil)
+	request, err := http.NewRequest("GET", targetUrl, nil)
 	if err != nil {
 		return nil, err
 	}
