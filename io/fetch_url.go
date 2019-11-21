@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/liuguangw/m3u8_download/common"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"time"
@@ -21,10 +22,14 @@ func doFetchUrl(targetUrl string, taskConfig *common.TaskConfig) (*http.Response
 	}
 	client := &http.Client{
 		Transport: &http.Transport{
+			DialContext: (&net.Dialer{
+				Timeout:   time.Duration(taskConfig.TimeOut) * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).DialContext,
 			Proxy:                 proxyFn,
 			MaxIdleConns:          taskConfig.MaxTask,
-			IdleConnTimeout:       30 * time.Second,
-			ResponseHeaderTimeout: time.Duration(taskConfig.TimeOut) * time.Second,
+			IdleConnTimeout:       90 * time.Second,
+			ResponseHeaderTimeout: 5 * time.Second,
 		},
 	}
 	request, err := http.NewRequest("GET", targetUrl, nil)
