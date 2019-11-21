@@ -3,11 +3,12 @@ package io
 import (
 	"github.com/liuguangw/m3u8_download/common"
 	sysio "io"
+	"net/http"
 	"os"
 )
 
-func DownloadFile(url string, taskConfig *common.TaskConfig, savePath string) error {
-	response, err := doFetchUrl(url, taskConfig)
+func DownloadFile(url string, client *http.Client, taskConfig *common.TaskConfig, savePath string) error {
+	response, err := doFetchUrl(url, client, taskConfig)
 	if err != nil {
 		return err
 	}

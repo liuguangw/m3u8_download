@@ -6,9 +6,10 @@ import (
 	"github.com/liuguangw/m3u8_download/common"
 	"github.com/liuguangw/m3u8_download/io"
 	"io/ioutil"
+	"net/http"
 )
 
-func loadTaskM3u8Info(downloadTask *DownloadTask) (m3u8CacheExists bool,
+func loadTaskM3u8Info(downloadTask *DownloadTask, client *http.Client) (m3u8CacheExists bool,
 	m3u8Info *common.M3u8Data,
 	taskStatusArr []byte, err error) {
 	m3u8CacheExists = false
@@ -34,7 +35,7 @@ func loadTaskM3u8Info(downloadTask *DownloadTask) (m3u8CacheExists bool,
 		}
 	} else {
 		//请求m3u8文件
-		m3u8ContentBits, err = io.FetchUrl(taskConfig.M3u8Url, taskConfig)
+		m3u8ContentBits, err = io.FetchUrl(taskConfig.M3u8Url, client, taskConfig)
 		if err != nil {
 			return m3u8CacheExists, m3u8Info, taskStatusArr, errors.New("Fetch m3u8 url Error: " + err.Error())
 		}

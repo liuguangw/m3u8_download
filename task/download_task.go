@@ -10,14 +10,14 @@ import (
 type DownloadTask struct {
 	TaskConfig           *common.TaskConfig
 	TaskNodes            []*common.DownloadTaskNode
-	CacheDir             string     //缓存目录
-	ServerM3u8Path       string     //下载的m3u8文件
-	LocalM3u8Path        string     //本地生成的m3u8文件
-	TaskDataFilePath     string     //任务数据文件路径
-	EncryptKeyPath       string     //加密的key保存路径
-	CacahedSuccessCount  int        //之前已缓存成功的文件数
-	DownloadSuccessCount chan int   //成功下载的文件数
-	NextTaskIndex        chan int   //获取下个下载任务的索引
+	CacheDir             string   //缓存目录
+	ServerM3u8Path       string   //下载的m3u8文件
+	LocalM3u8Path        string   //本地生成的m3u8文件
+	TaskDataFilePath     string   //任务数据文件路径
+	EncryptKeyPath       string   //加密的key保存路径
+	CacahedSuccessCount  int      //之前已缓存成功的文件数
+	DownloadSuccessCount chan int //成功下载的文件数
+	NextTaskIndex        chan int //获取下个下载任务的索引
 }
 
 func NewDownloadTask(configFilePath string) (*DownloadTask, error) {
@@ -29,8 +29,13 @@ func NewDownloadTask(configFilePath string) (*DownloadTask, error) {
 	if err != nil {
 		return nil, err
 	}
+	//创建httpClient
+	httpClient, err := io.CreateHttpClient(taskConfig)
+	if err != nil {
+		return nil, errors.New("Create http client Error: " + err.Error())
+	}
 	//本地的m3u8文件是否存在
-	m3u8CacheExists, m3u8Info, taskStatusArr, err := loadTaskM3u8Info(downloadTask)
+	m3u8CacheExists, m3u8Info, taskStatusArr, err := loadTaskM3u8Info(downloadTask, httpClient)
 	if err != nil {
 		return nil, err
 	}
@@ -42,9 +47,9 @@ func NewDownloadTask(configFilePath string) (*DownloadTask, error) {
 			return nil, errors.New("Cache m3u8 Error: " + err.Error())
 		}
 		if m3u8Info.EncryptKeyUri != "" {
-			//缓存key
+			//下载并缓存key
 			keyFileUrl := tools.GetItemUrl(taskConfig.M3u8Url, m3u8Info.EncryptKeyUri)
-			err = io.DownloadFile(keyFileUrl, taskConfig, downloadTask.EncryptKeyPath)
+			err = io.DownloadFile(keyFileUrl, httpClient, taskConfig, downloadTask.EncryptKeyPath)
 			if err != nil {
 				return nil, errors.New("Download Key Error: " + err.Error())
 			}
