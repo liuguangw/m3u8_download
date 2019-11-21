@@ -38,7 +38,7 @@ func loadBaseDownloadTask(taskConfig *common.TaskConfig) (*DownloadTask, error) 
 		TaskConfig:       taskConfig,
 		TaskNodes:        nil,
 		CacheDir:         cacheDir,
-		ServerM3u8Path:   filepath.Join(cacheDir, "000server.m3u8"),
+		ServerM3u8Path:   filepath.Join(cacheDir, "000server_cache.data"),
 		LocalM3u8Path:    filepath.Join(cacheDir, "000local.m3u8"),
 		TaskDataFilePath: filepath.Join(cacheDir, "000task.txt"),
 		EncryptKeyPath:   filepath.Join(cacheDir, "000key.ts"),
