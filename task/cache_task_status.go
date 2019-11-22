@@ -5,7 +5,7 @@ import (
 	"github.com/liuguangw/m3u8_download/io"
 )
 
-func CacheTaskData(downloadTask *DownloadTask) error {
+func cacheTaskStatus(downloadTask *DownloadTask) error {
 	dataFilePath := downloadTask.TaskDataFilePath
 	taskData := &common.TaskData{
 		M3u8Url:    downloadTask.TaskConfig.M3u8Url,

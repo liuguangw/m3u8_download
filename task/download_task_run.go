@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-func (downloadTask *DownloadTask) RunDownload() {
+func (downloadTask *DownloadTask) runDownload() {
 	//创建httpClient
 	httpClient, err := io.CreateHttpClient(downloadTask.TaskConfig)
 	if err != nil {

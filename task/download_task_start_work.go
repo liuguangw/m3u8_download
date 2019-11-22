@@ -2,7 +2,6 @@ package task
 
 import (
 	"errors"
-	"github.com/liuguangw/m3u8_download/common"
 	"github.com/liuguangw/m3u8_download/io"
 	"github.com/liuguangw/m3u8_download/tools"
 	"time"
@@ -31,73 +30,41 @@ func (downloadTask *DownloadTask) StartWork() error {
 		cachedTaskUrl = cachedInfo.M3u8Url
 	}
 	m3u8CacheExists := (cachedTaskUrl == taskConfig.M3u8Url) && io.FileExists(downloadTask.ServerM3u8Path)
-	//创建httpClient
-	httpClient, err := io.CreateHttpClient(taskConfig)
+	//加载m3u8信息
+	m3u8Info, err := loadTaskM3u8Info(m3u8CacheExists, downloadTask)
 	if err != nil {
-		return errors.New("Create http client Error: " + err.Error())
-	}
-	m3u8Info, err := loadTaskM3u8Info(m3u8CacheExists,
-		downloadTask.ServerM3u8Path, taskConfig, httpClient)
-	if !m3u8CacheExists {
-		//缓存m3u8文件
-		err = io.WriteM3u8Content(downloadTask.ServerM3u8Path, m3u8Info)
-		if err != nil {
-			return errors.New("Cache m3u8 Error: " + err.Error())
-		}
-		if m3u8Info.EncryptKeyUri != "" {
-			tools.ShowCommonMessage("downloading key file")
-			//下载并缓存key
-			keyFileUrl := tools.GetItemUrl(taskConfig.M3u8Url, m3u8Info.EncryptKeyUri)
-			err = io.DownloadFile(keyFileUrl, httpClient, taskConfig, downloadTask.EncryptKeyPath)
-			if err != nil {
-				return errors.New("Download Key Error: " + err.Error())
-			}
-			tools.ShowSuccessMessage("download key file success")
-		}
+		return err
 	}
 	//生成并保存本地m3u8
 	err = SaveLocalM3u8(m3u8Info, downloadTask)
 	if err != nil {
 		return errors.New("Create local m3u8 Error: " + err.Error())
 	}
-	//初始化：成功缓存的文件数、总文件数
-	successCachedCount := 0
+	//总文件数
 	totalCount := len(m3u8Info.TsUrls)
-	downloadTask.TaskNodes = make([]*common.DownloadTaskNode, totalCount)
-	for tsIndex, tsUrl := range m3u8Info.TsUrls {
-		tmpTaskNode := &common.DownloadTaskNode{
-			TsUrl:  tools.GetItemUrl(taskConfig.M3u8Url, tsUrl),
-			Status: common.STATUS_NOT_RUNNING,
-		}
-		// 根据任务数据文件，标记已完成的任务
-		if tsIndex < len(cachedTaskStatusArr) {
-			if cachedTaskStatusArr[tsIndex] == common.STATUS_SUCCESS {
-				tmpTaskNode.Status = common.STATUS_SUCCESS
-				successCachedCount++
-			}
-		}
-		downloadTask.TaskNodes[tsIndex] = tmpTaskNode
-	}
+	//已成功缓存的文件数
+	successCachedCount := downloadTask.loadTaskNodes(m3u8Info,m3u8CacheExists,cachedTaskStatusArr)
 	//初始化channel
 	downloadTask.DownloadSuccessCount = make(chan int)
 	downloadTask.NextTaskIndex = make(chan int)
 	//
 	if successCachedCount < totalCount {
-		go downloadTask.RunBackend()
+		go downloadTask.runBackend()
 		for i := 0; i < downloadTask.TaskConfig.MaxTask; i++ {
-			go downloadTask.RunDownload()
+			go downloadTask.runDownload()
 		}
 		//保存任务数据文件
-		err = CacheTaskData(downloadTask)
+		err = cacheTaskStatus(downloadTask)
 		if err != nil {
 			tools.ShowErrorMessage("cache task Data Error: " + err.Error())
 		}
+		//开始计时
 		taskStartTime := time.Now()
 		tools.ShowSuccessMessage(tools.FormatDownloadProgress(successCachedCount, totalCount, &taskStartTime))
 		for successCachedCount < totalCount {
 			successCachedCount += <-downloadTask.DownloadSuccessCount
 			//保存任务数据文件
-			err = CacheTaskData(downloadTask)
+			err = cacheTaskStatus(downloadTask)
 			if err != nil {
 				tools.ShowErrorMessage("cache task Data Error: " + err.Error())
 			}

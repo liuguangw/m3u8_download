@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func (downloadTask *DownloadTask) RunBackend() {
+func (downloadTask *DownloadTask) runBackend() {
 	for {
 		hasWork := false
 		for i, taskNode := range downloadTask.TaskNodes {

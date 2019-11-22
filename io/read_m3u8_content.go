@@ -12,6 +12,9 @@ func ReadM3u8Content(content string) (*common.M3u8Data, error) {
 		TsUrls:       []string{},
 		OtherHeaders: []string{},
 	}
+	if !strings.HasPrefix(content, "#EXTM3U") {
+		return nil, errors.New("invalid m3u8 content")
+	}
 	lines := strings.Split(content, "\n")
 	for _, lineContent := range lines {
 		if lineContent == "" {
@@ -42,8 +45,8 @@ func ReadM3u8Content(content string) (*common.M3u8Data, error) {
 			m3u8Data.TsUrls = append(m3u8Data.TsUrls, lineContent)
 		}
 	}
-	if len(m3u8Data.TsUrls) == 0{
-		return m3u8Data,errors.New("no ts url found")
+	if len(m3u8Data.TsUrls) == 0 {
+		return m3u8Data, errors.New("no ts url found")
 	}
 	return m3u8Data, nil
 }
