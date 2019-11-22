@@ -1,10 +1,9 @@
 package task
 
 import (
-	"errors"
 	"github.com/liuguangw/m3u8_download/common"
-	"github.com/liuguangw/m3u8_download/io"
-	"github.com/liuguangw/m3u8_download/tools"
+	"path/filepath"
+	"strings"
 )
 
 type DownloadTask struct {
@@ -15,67 +14,28 @@ type DownloadTask struct {
 	LocalM3u8Path        string   //本地生成的m3u8文件
 	TaskDataFilePath     string   //任务数据文件路径
 	EncryptKeyPath       string   //加密的key保存路径
-	CacahedSuccessCount  int      //之前已缓存成功的文件数
 	DownloadSuccessCount chan int //成功下载的文件数
 	NextTaskIndex        chan int //获取下个下载任务的索引
 }
 
-func NewDownloadTask(configFilePath string) (*DownloadTask, error) {
-	taskConfig, err := ReadTaskConfig(configFilePath)
-	if err != nil {
-		return nil, errors.New("Read Config Error: " + err.Error())
+func NewDownloadTask(taskConfig *common.TaskConfig) (*DownloadTask, error) {
+	//缓存文件夹名称
+	cacheDirName := ""
+	pos := strings.Index(taskConfig.SaveFileName, ".")
+	if pos < 0 {
+		cacheDirName = taskConfig.SaveFileName
+	} else {
+		cacheDirName = taskConfig.SaveFileName[0:pos]
 	}
-	downloadTask, err := loadBaseDownloadTask(taskConfig)
-	if err != nil {
-		return nil, err
-	}
-	//创建httpClient
-	httpClient, err := io.CreateHttpClient(taskConfig)
-	if err != nil {
-		return nil, errors.New("Create http client Error: " + err.Error())
-	}
-	//本地的m3u8文件是否存在
-	m3u8CacheExists, m3u8Info, taskStatusArr, err := loadTaskM3u8Info(downloadTask, httpClient)
-	if err != nil {
-		return nil, err
-	}
-	taskStatusArrLength := len(taskStatusArr)
-	if !m3u8CacheExists {
-		//缓存m3u8文件
-		err = io.WriteM3u8Content(downloadTask.ServerM3u8Path, m3u8Info)
-		if err != nil {
-			return nil, errors.New("Cache m3u8 Error: " + err.Error())
-		}
-		if m3u8Info.EncryptKeyUri != "" {
-			//下载并缓存key
-			keyFileUrl := tools.GetItemUrl(taskConfig.M3u8Url, m3u8Info.EncryptKeyUri)
-			err = io.DownloadFile(keyFileUrl, httpClient, taskConfig, downloadTask.EncryptKeyPath)
-			if err != nil {
-				return nil, errors.New("Download Key Error: " + err.Error())
-			}
-		}
-	}
-	err = SaveLocalM3u8(m3u8Info, downloadTask)
-	if err != nil {
-		return nil, errors.New("Create local m3u8 Error: " + err.Error())
-	}
-	downloadTask.TaskNodes = make([]*common.DownloadTaskNode, len(m3u8Info.TsUrls))
-	for tsIndex, tsUrl := range m3u8Info.TsUrls {
-		tmpTaskNode := &common.DownloadTaskNode{
-			TsUrl:  tools.GetItemUrl(taskConfig.M3u8Url, tsUrl),
-			Status: common.STATUS_NOT_RUNNING,
-		}
-		// 根据任务数据文件，标记已完成的任务
-		if tsIndex < taskStatusArrLength {
-			if taskStatusArr[tsIndex] == common.STATUS_SUCCESS {
-				tmpTaskNode.Status = common.STATUS_SUCCESS
-				downloadTask.CacahedSuccessCount++
-			}
-		}
-		downloadTask.TaskNodes[tsIndex] = tmpTaskNode
-	}
-
-	downloadTask.DownloadSuccessCount = make(chan int)
-	downloadTask.NextTaskIndex = make(chan int)
-	return downloadTask, nil
+	//缓存文件夹路径
+	cacheDir := filepath.Join(taskConfig.SaveDir, "cache", cacheDirName)
+	return &DownloadTask{
+		TaskConfig:       taskConfig,
+		TaskNodes:        nil,
+		CacheDir:         cacheDir,
+		ServerM3u8Path:   filepath.Join(cacheDir, "000server_cache.data"),
+		LocalM3u8Path:    filepath.Join(cacheDir, "000local.m3u8"),
+		TaskDataFilePath: filepath.Join(cacheDir, "000task.txt"),
+		EncryptKeyPath:   filepath.Join(cacheDir, "000key.ts"),
+	}, nil
 }

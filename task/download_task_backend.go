@@ -5,20 +5,20 @@ import (
 	"time"
 )
 
-func (t *DownloadTask) RunBackend() {
+func (downloadTask *DownloadTask) RunBackend() {
 	for {
 		hasWork := false
-		for i, taskNode := range t.TaskNodes {
+		for i, taskNode := range downloadTask.TaskNodes {
 			if taskNode.Status != common.STATUS_SUCCESS {
 				hasWork = true
 			}
 			if taskNode.Status == common.STATUS_NOT_RUNNING || taskNode.Status == common.STATUS_ERROR {
 				taskNode.Status = common.STATUS_RUNNING
-				t.NextTaskIndex <- i
+				downloadTask.NextTaskIndex <- i
 			}
 		}
 		if !hasWork {
-			close(t.NextTaskIndex)
+			close(downloadTask.NextTaskIndex)
 			break
 		}
 		time.Sleep(time.Duration(1500) * time.Millisecond)

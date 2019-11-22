@@ -9,27 +9,27 @@ import (
 	"strconv"
 )
 
-func (t *DownloadTask) RunDownload() {
+func (downloadTask *DownloadTask) RunDownload() {
 	//创建httpClient
-	httpClient, err := io.CreateHttpClient(t.TaskConfig)
+	httpClient, err := io.CreateHttpClient(downloadTask.TaskConfig)
 	if err != nil {
 		log.Fatalln("Create http client Error: " + err.Error())
 	}
 	for {
-		taskIndex, ok := <-t.NextTaskIndex
+		taskIndex, ok := <-downloadTask.NextTaskIndex
 		if !ok {
 			break
 		}
-		taskInfo := t.TaskNodes[taskIndex]
-		tsSavePath := filepath.Join(t.CacheDir, strconv.Itoa(taskIndex)+".ts")
+		taskInfo := downloadTask.TaskNodes[taskIndex]
+		tsSavePath := filepath.Join(downloadTask.CacheDir, strconv.Itoa(taskIndex)+".ts")
 		//download
-		err := io.DownloadFile(taskInfo.TsUrl, httpClient, t.TaskConfig, tsSavePath)
+		err := io.DownloadFile(taskInfo.TsUrl, httpClient, downloadTask.TaskConfig, tsSavePath)
 		if err != nil {
 			taskInfo.Status = common.STATUS_ERROR
 			tools.ShowErrorMessage("save ts error: " + err.Error())
 			continue
 		}
 		taskInfo.Status = common.STATUS_SUCCESS
-		t.DownloadSuccessCount <- 1
+		downloadTask.DownloadSuccessCount <- 1
 	}
 }

@@ -8,11 +8,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"time"
 )
 
 func main() {
 	tools.ShowCommonMessage("Powered by liuguang@github https://github.com/liuguangw")
+	//获取配置文件路径
 	configPath := ""
 	if len(os.Args) < 2 {
 		noteStr := "Usage: m3u8_download [configFile]"
@@ -21,35 +21,23 @@ func main() {
 	} else {
 		configPath = os.Args[1]
 	}
-	downloadTask, err := task.NewDownloadTask(configPath)
+	//读取配置
+	taskConfig, err := task.LoadTaskConfig(configPath)
+	if err != nil {
+		tools.ShowErrorMessage("Load Config Error: " + err.Error())
+		return
+	}
+	//创建任务
+	downloadTask, err := task.NewDownloadTask(taskConfig)
 	if err != nil {
 		tools.ShowError(err)
 		return
 	}
-	//fmt.Println(downloadTask)
-	successCount := downloadTask.CacahedSuccessCount
-	totalCount := len(downloadTask.TaskNodes)
-	if successCount < totalCount {
-		go downloadTask.RunBackend()
-		for i := 0; i < downloadTask.TaskConfig.MaxTask; i++ {
-			go downloadTask.RunDownload()
-		}
-		//保存任务数据文件
-		err = task.CacheTaskData(downloadTask)
-		if err != nil {
-			tools.ShowErrorMessage("cache task Data Error: " + err.Error())
-		}
-		taskStartTime := time.Now()
-		tools.ShowSuccessMessage(tools.FormatDownloadProgress(successCount, totalCount, &taskStartTime))
-		for successCount < totalCount {
-			successCount += <-downloadTask.DownloadSuccessCount
-			//保存任务数据文件
-			err = task.CacheTaskData(downloadTask)
-			if err != nil {
-				tools.ShowErrorMessage("cache task Data Error: " + err.Error())
-			}
-			tools.ShowSuccessMessage(tools.FormatDownloadProgress(successCount, totalCount, &taskStartTime))
-		}
+	//启动任务
+	err = downloadTask.StartWork()
+	if err != nil {
+		tools.ShowError(err)
+		return
 	}
 	tools.ShowSuccessMessage("all downloaded")
 	//开始转码
