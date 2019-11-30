@@ -43,7 +43,7 @@ func (downloadTask *DownloadTask) StartWork() error {
 	//总文件数
 	totalCount := len(m3u8Info.TsUrls)
 	//已成功缓存的文件数
-	successCachedCount := downloadTask.loadTaskNodes(m3u8Info,m3u8CacheExists,cachedTaskStatusArr)
+	successCachedCount := downloadTask.loadTaskNodes(m3u8Info, cachedTaskStatusArr)
 	//初始化channel
 	downloadTask.DownloadSuccessCount = make(chan int)
 	downloadTask.NextTaskIndex = make(chan int)

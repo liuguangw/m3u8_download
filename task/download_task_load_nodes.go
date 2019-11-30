@@ -6,8 +6,7 @@ import (
 )
 
 //加载任务节点，并返回已成功缓存过的文件数量
-func (downloadTask *DownloadTask) loadTaskNodes(m3u8Info *common.M3u8Data,
-	m3u8CacheExists bool, cachedTaskStatusArr []byte) int {
+func (downloadTask *DownloadTask) loadTaskNodes(m3u8Info *common.M3u8Data, cachedTaskStatusArr []byte) int {
 	successCachedCount := 0
 	downloadTask.TaskNodes = make([]*common.DownloadTaskNode, len(m3u8Info.TsUrls))
 	for tsIndex, tsUrl := range m3u8Info.TsUrls {
@@ -17,7 +16,7 @@ func (downloadTask *DownloadTask) loadTaskNodes(m3u8Info *common.M3u8Data,
 			Status: common.STATUS_NOT_RUNNING,
 		}
 		// 根据任务数据文件，标记已完成的任务
-		if m3u8CacheExists && tsIndex < len(cachedTaskStatusArr) {
+		if tsIndex < len(cachedTaskStatusArr) {
 			if cachedTaskStatusArr[tsIndex] == common.STATUS_SUCCESS {
 				tmpTaskNode.Status = common.STATUS_SUCCESS
 				successCachedCount++
