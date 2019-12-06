@@ -3,10 +3,10 @@ package task
 import (
 	"github.com/liuguangw/m3u8_download/common"
 	"github.com/liuguangw/m3u8_download/io"
+	"os"
 )
 
 func cacheTaskStatus(downloadTask *DownloadTask) error {
-	dataFilePath := downloadTask.TaskDataFilePath
 	taskData := &common.TaskData{
 		M3u8Url:    downloadTask.TaskConfig.M3u8Url,
 		TaskStatus: make([]byte, len(downloadTask.TaskNodes)),
@@ -14,5 +14,12 @@ func cacheTaskStatus(downloadTask *DownloadTask) error {
 	for taskIndex, taskInfo := range downloadTask.TaskNodes {
 		taskData.TaskStatus[taskIndex] = taskInfo.Status
 	}
-	return io.WriteTaskData(dataFilePath, taskData)
+	dataFilePath := downloadTask.TaskDataFilePath
+	//先写到临时文件
+	dataFileSwapPath := dataFilePath + ".swp"
+	if err := io.WriteTaskData(dataFileSwapPath, taskData); err != nil {
+		return err
+	}
+	//再rename
+	return os.Rename(dataFileSwapPath, dataFilePath)
 }
