@@ -28,7 +28,9 @@ func CreateHttpClient(taskConfig *common.TaskConfig) (*http.Client, error) {
 			Proxy:                 proxyFn,
 			MaxIdleConns:          taskConfig.MaxTask,
 			IdleConnTimeout:       90 * time.Second,
-			ResponseHeaderTimeout: 5 * time.Second,
+			ResponseHeaderTimeout: 7 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
 		},
 	}, nil
 }
