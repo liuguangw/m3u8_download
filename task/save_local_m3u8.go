@@ -19,7 +19,7 @@ func SaveLocalM3u8(m3u8Info *common.M3u8Data, downloadTask *DownloadTask) error 
 		localM3u8Info.EncryptKeyUri = filepath.Base(downloadTask.EncryptKeyPath)
 	}
 	for i := 0; i < len(m3u8Info.TsUrls); i++ {
-		localM3u8Info.TsUrls[i] = strconv.Itoa(i) + ".ts"
+		localM3u8Info.TsUrls[i] = "out" + strconv.Itoa(i) + ".ts"
 	}
 	return io.WriteM3u8Content(downloadTask.LocalM3u8Path, localM3u8Info)
 }

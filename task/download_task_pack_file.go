@@ -13,7 +13,8 @@ import (
 func (downloadTask *DownloadTask) PackFile() error {
 	localM3u8Name := filepath.Base(downloadTask.LocalM3u8Path)
 	outputPath := "../../" + downloadTask.TaskConfig.SaveFileName
-	cmd := exec.Command("ffmpeg", "-i", localM3u8Name, "-c", "copy", outputPath)
+	cmd := exec.Command("ffmpeg", "-i", localM3u8Name, "-c", "copy",
+		"-metadata", "description=Packed by liuguangw/m3u8_download", outputPath)
 	//工作目录
 	cmd.Dir = downloadTask.CacheDir
 	//接管Stdout

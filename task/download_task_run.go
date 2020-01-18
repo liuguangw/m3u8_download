@@ -21,7 +21,7 @@ func (downloadTask *DownloadTask) runDownload() {
 			break
 		}
 		taskInfo := downloadTask.TaskNodes[taskIndex]
-		tsSavePath := filepath.Join(downloadTask.CacheDir, strconv.Itoa(taskIndex)+".ts")
+		tsSavePath := filepath.Join(downloadTask.CacheDir, "out"+strconv.Itoa(taskIndex)+".ts")
 		//download
 		err := io.DownloadFile(taskInfo.TsUrl, httpClient, downloadTask.TaskConfig, tsSavePath)
 		if err != nil {
