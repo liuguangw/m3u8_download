@@ -21,7 +21,7 @@ func doFetchUrl(targetUrl string, client *http.Client, taskConfig *common.TaskCo
 		return nil, err
 	}
 	if response.StatusCode != http.StatusOK {
-		return nil, errors.New("Http " + response.Status + " Error")
+		return nil, errors.New("Http " + response.Status + " Error, URL: " + targetUrl)
 	}
 	return response, nil
 }
